@@ -94,7 +94,7 @@ void LokiServer::setupServer() {
 void LokiServer::restServerRouting() {
     Serial.println("[LOKI-SERVER] Rest Server Routing");
 
-    brainServer->on("/root", HTTP_GET, [&](AsyncWebServerRequest *request)  { // root
+    brainServer->on("/root", HTTP_GET, [&](AsyncWebServerRequest *request) { // root
         handleRoot(request);
     });
 
@@ -110,25 +110,30 @@ void LokiServer::restServerRouting() {
         getWifiScan(request);
     });
 
-    brainServer->on("/wifi/connection/list", HTTP_GET, [&](AsyncWebServerRequest *request) { // get saved wifi connections
-        getSavedWifiConnections(request);
-    });
+    brainServer->on("/wifi/connection/list", HTTP_GET,
+                    [&](AsyncWebServerRequest *request) { // get saved wifi connections
+                        getSavedWifiConnections(request);
+                    });
 
-    brainServer->on("/wifi/connection/current", HTTP_GET, [&](AsyncWebServerRequest *request) { // get current wifi connection
-        getWifiConnection(request);
-    });
+    brainServer->on("/wifi/connection/current", HTTP_GET,
+                    [&](AsyncWebServerRequest *request) { // get current wifi connection
+                        getWifiConnection(request);
+                    });
 
-    brainServer->on("/wifi/connection/specific", HTTP_DELETE, [&](AsyncWebServerRequest *request) { // delete wifi connection from list
-        deleteWifiConnection(request);
-    });
+    brainServer->on("/wifi/connection/specific", HTTP_DELETE,
+                    [&](AsyncWebServerRequest *request) { // delete wifi connection from list
+                        deleteWifiConnection(request);
+                    });
 
-    brainServer->on("/wifi/connection/list", HTTP_DELETE, [&](AsyncWebServerRequest *request) { // delete all wifi connections from list
-        deleteAllWifiConnections(request);
-    });
+    brainServer->on("/wifi/connection/list", HTTP_DELETE,
+                    [&](AsyncWebServerRequest *request) { // delete all wifi connections from list
+                        deleteAllWifiConnections(request);
+                    });
 
-    brainServer->on("/wifi/connection/specific", HTTP_GET, [&](AsyncWebServerRequest *request) { // get wifi connection from list
-        getConnectionInformation(request);
-    });
+    brainServer->on("/wifi/connection/specific", HTTP_GET,
+                    [&](AsyncWebServerRequest *request) { // get wifi connection from list
+                        getConnectionInformation(request);
+                    });
 
     brainServer->on("/voice", HTTP_GET, [&](AsyncWebServerRequest *request) { // get voice infos
         getVoice(request);
@@ -155,24 +160,31 @@ void LokiServer::restServerRouting() {
         //return true;
     });
 
-    brainServer->onRequestBody([&](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
-        Serial.println("[LOKI-SERVER] Request body");
-        Serial.println((char *) data);
+    brainServer->onRequestBody(
+            [&](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+                Serial.println("[LOKI-SERVER] Request body");
+                Serial.println((char *) data);
 
-        if (request->url() == "/wifi/connection") {
-            setWifiConnection(request, data);
-        } else if (request->url() == "/wifi/connection/list") {
-            addNewWifiConnection(request, data);
-        } else if (request->url() == "/voice") {
-            setVoice(request, data);
-        } else if (request->url() == "/voice/sound") {
-            makeSound(request, data);
-        } else if (request->url() == "/wifi/access-point") {
-            runAccessPoint(request, data);
-        } else if (request->url() == "/wifi/attempt") {
-            addNewPasswordAttempt(request, data);
-        }
+                if (request->url() == "/wifi/connection") {
+                    setWifiConnection(request, data);
+                } else if (request->url() == "/wifi/connection/list") {
+                    addNewWifiConnection(request, data);
+                } else if (request->url() == "/voice") {
+                    setVoice(request, data);
+                } else if (request->url() == "/voice/sound") {
+                    makeSound(request, data);
+                } else if (request->url() == "/wifi/access-point") {
+                    runAccessPoint(request, data);
+                } else if (request->url() == "/wifi/attempt") {
+                    addNewPasswordAttempt(request, data);
+                }
+            });
+
+    brainServer->on("/*", HTTP_OPTIONS, [&](AsyncWebServerRequest *request) {
+        request->send(200);
     });
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
 }
 
 void LokiServer::returnError(AsyncWebServerRequest *request, errorContainer error) {
@@ -193,7 +205,7 @@ void LokiServer::handleNotFound(AsyncWebServerRequest *request) {
     if (WiFi.isConnected()) {
         messageHTML.replace("YOUR_IP", WiFi.localIP().toString().c_str());
         messageHTML.replace("YOUR_SSID_NAME", WiFi.SSID().c_str());
-    } else if(WiFi.getMode() == WIFI_AP){
+    } else if (WiFi.getMode() == WIFI_AP) {
         messageHTML.replace("YOUR_IP", WiFi.softAPIP().toString().c_str());
         messageHTML.replace("YOUR_SSID_NAME", WiFi.softAPSSID().c_str());
     }
@@ -209,7 +221,7 @@ void LokiServer::restartDevice(AsyncWebServerRequest *request) {
     request->send(200, "application/json", messageJson);
 
     this->face->idle(mode, "Restarting", getDate(), getTime());
-    this->face->clearTime = millis() + (3*1000);
+    this->face->clearTime = millis() + (3 * 1000);
     this->voice->notification();
 
     delay(5000);
@@ -222,7 +234,7 @@ void LokiServer::handleRoot(AsyncWebServerRequest *request) {
     if (WiFi.isConnected()) {
         messageHTML.replace("YOUR_IP", WiFi.localIP().toString().c_str());
         messageHTML.replace("YOUR_SSID_NAME", WiFi.SSID().c_str());
-    } else if(WiFi.getMode() == WIFI_AP){
+    } else if (WiFi.getMode() == WIFI_AP) {
         messageHTML.replace("YOUR_IP", WiFi.softAPIP().toString().c_str());
         messageHTML.replace("YOUR_SSID_NAME", WiFi.softAPSSID().c_str());
     }
@@ -283,7 +295,7 @@ void LokiServer::getDevice(AsyncWebServerRequest *request) {
 void LokiServer::getWifiScan(AsyncWebServerRequest *request) {
     int n = WiFi.scanNetworks();
     String wifiScanJson;
-    DynamicJsonDocument doc(1024*3);
+    DynamicJsonDocument doc(1024 * 3);
     doc["date"] = getDateTime();
     doc["wifiCount"] = n;
     for (int i = 0; i < n; ++i) {
@@ -341,7 +353,7 @@ void LokiServer::setWifiConnection(AsyncWebServerRequest *request, uint8_t *data
     this->runWifi = true;
 
     this->voice->notification();
-    this->face->clearTime = millis() + (3*1000);
+    this->face->clearTime = millis() + (3 * 1000);
     this->setDeviceTime();
 
     doc["date"] = getDateTime();
@@ -354,12 +366,11 @@ void LokiServer::setWifiConnection(AsyncWebServerRequest *request, uint8_t *data
 }
 
 bool LokiServer::connectToWifi(String ssid, String password) {
-    if(WiFi.isConnected()){
+    if (WiFi.isConnected()) {
         Serial.println("[Wifi] Already connected to a wifi");
         WiFi.disconnect();
         Serial.println("[Wifi] Disconnected from wifi");
-    }
-    else if (WiFi.getMode() == WIFI_AP) {
+    } else if (WiFi.getMode() == WIFI_AP) {
         Serial.println("[Wifi] Already running access point");
         // stop access point
         WiFi.softAPdisconnect(true);
@@ -466,7 +477,7 @@ void LokiServer::getConnectionInformation(AsyncWebServerRequest *request) {
     request->send(200, "application/json", messageJson);
 }
 
-void LokiServer::getVoice(AsyncWebServerRequest *request){
+void LokiServer::getVoice(AsyncWebServerRequest *request) {
     String messageJson;
     StaticJsonDocument<512> doc;
     doc["date"] = getDateTime();
@@ -520,7 +531,7 @@ void LokiServer::makeSound(AsyncWebServerRequest *request, uint8_t *data) {
     StaticJsonDocument<512> postBodyDoc;
     DeserializationError error = deserializeJson(postBodyDoc, data);
 
-    if(error){
+    if (error) {
         Serial.println("[LOKI-SERVER] Invalid JSON in POST body");
         errorContainer errorCont;
         errorCont.date = getDateTime();
@@ -546,13 +557,13 @@ void LokiServer::makeSound(AsyncWebServerRequest *request, uint8_t *data) {
         int count = postBodyDoc["count"];
         voice->blinkVibration(count);
     } else {
-            errorContainer errorCont;
-            errorCont.date = getDateTime();
-            errorCont.error = "Invalid voice type";
-            errorCont.errorType = "Voice";
-            errorCont.errorCode = 400;
-            returnError(request, errorCont);
-            return;
+        errorContainer errorCont;
+        errorCont.date = getDateTime();
+        errorCont.error = "Invalid voice type";
+        errorCont.errorType = "Voice";
+        errorCont.errorCode = 400;
+        returnError(request, errorCont);
+        return;
     }
 
     StaticJsonDocument<512> responseDoc;
@@ -621,7 +632,7 @@ void LokiServer::stopAccessPoint(AsyncWebServerRequest *request) {
     WiFi.softAPdisconnect(true);
     this->mode = "Null";
     this->face->idle(mode, " - ", getDate(), getTime());
-    this->face->clearTime = millis() + (3*1000);
+    this->face->clearTime = millis() + (3 * 1000);
     this->voice->notification();
 }
 
@@ -667,7 +678,7 @@ void LokiServer::addNewAttemptWithGet(AsyncWebServerRequest *request) {
 
     voice->notification();
     face->idle("Attempt", password, getDate(), getTime());
-    face->clearTime = millis() + (3*1000);
+    face->clearTime = millis() + (3 * 1000);
 }
 
 void LokiServer::getPasswordAttempts(AsyncWebServerRequest *request) {
@@ -692,7 +703,7 @@ void LokiServer::deletePasswordAttempts(AsyncWebServerRequest *request) {
 
 void LokiServer::startAccessPoint() {
     // check already exist
-    if(WiFi.getMode() == WIFI_AP){
+    if (WiFi.getMode() == WIFI_AP) {
         Serial.println("[Wifi] Already running access point");
         // stop access point
         stopAccessPoint(nullptr);
@@ -716,7 +727,7 @@ void LokiServer::startAccessPoint() {
     Serial.println(WiFi.softAPIP());
 
     this->face->idle(mode, "Creating A.P.", getDate(), getTime());
-    this->face->clearTime = millis() + (3*1000);
+    this->face->clearTime = millis() + (3 * 1000);
     this->voice->notification();
     this->mode = "AP";
 }

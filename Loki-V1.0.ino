@@ -56,8 +56,8 @@ void setup() {
     face.setDisplay(display);
     lokiServer.setFace(face);
 
-    startAP();
-    //connectWifi(con_ssid, con_password);
+    //startAP();
+    connectWifi(con_ssid, con_password);
     setMDNS();
 
     // device time
